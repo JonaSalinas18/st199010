@@ -8,7 +8,30 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
+
+add_executable(point_cloud_processor_node
+  src/PointCloudProcessor.cpp
+)
+
+ament_target_dependencies(point_cloud_processor_node
+  rclcpp
+  sensor_msgs
+  #geometry_msgs
+  #tf2_ros
+)
+
+install(TARGETS
+  point_cloud_processor_node
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(DIRECTORY
+  launch
+  #config
+  DESTINATION share/${PROJECT_NAME}
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

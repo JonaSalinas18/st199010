@@ -1,0 +1,34 @@
+<mxfile host="Electron">
+  <diagram name="Page-1" id="h5Aq1zB-Ct3QikaJY2TC">
+    <mxGraphModel dx="1567" dy="434" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="3Xvwu5JOsTFl7TVjNNpy-5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="" vertex="1">
+          <mxGeometry height="670" width="1370" x="-100" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="3Xvwu5JOsTFl7TVjNNpy-13" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;" value="&lt;span style=&quot;font-weight: 700;&quot;&gt;PointCloudProcessor.cpp&lt;/span&gt;&lt;div&gt;&lt;span style=&quot;font-weight: 700;&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;font-weight: 700;&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;&quot;&gt;- SubscriptionPtr: Subscription::SharedPtr&lt;/span&gt;&lt;span style=&quot;font-weight: 700;&quot;&gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;- KeyframeCounter: int&lt;/div&gt;&lt;div&gt;- KeyframePointCloudArray: vector&amp;lt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;- PointCloud_Callback(PointCloud2::SharedPtr): void&lt;span style=&quot;&quot;&gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;- ApplyICP(): void&lt;/div&gt;" vertex="1">
+          <mxGeometry height="240" width="370" x="-10" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="3Xvwu5JOsTFl7TVjNNpy-14" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;" value="&lt;span style=&quot;font-weight: 700; text-align: center;&quot;&gt;Kdtree.cpp&lt;/span&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;- TreeRoot: Node*&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;+ BuildTree(pointCloudArray: vector&amp;lt;float&amp;gt;): Node*&lt;div&gt;+ NearestNeighbor(): Node*&lt;/div&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="280" width="460" x="380" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="3Xvwu5JOsTFl7TVjNNpy-15" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;" value="&lt;div style=&quot;text-align: center;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;&lt;b&gt;odom.launch.py&lt;/b&gt;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: center;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;Runs PointCloudProcessorNode&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;Load parameters from odometryParameters.yaml&lt;/div&gt;&lt;div style=&quot;&quot;&gt;(launch flag) Launches RViz2&lt;/div&gt;" vertex="1">
+          <mxGeometry height="140" width="350" x="250" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="3Xvwu5JOsTFl7TVjNNpy-16" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;" value="&lt;div style=&quot;text-align: center;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;&lt;b&gt;odometryParameters.yaml&lt;/b&gt;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: center;&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;MinRange&lt;/div&gt;&lt;div style=&quot;&quot;&gt;MaxRange&lt;/div&gt;&lt;div style=&quot;&quot;&gt;IntensityThreshold&lt;/div&gt;" vertex="1">
+          <mxGeometry height="85" width="180" x="640" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="3Xvwu5JOsTFl7TVjNNpy-17" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;" value="struct Node&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;point: vector&amp;lt;float&amp;gt;&lt;/div&gt;&lt;div&gt;leftChild: Node*&lt;/div&gt;&lt;div&gt;rightChild: Node*&lt;/div&gt;" vertex="1">
+          <mxGeometry height="110" width="140" x="630" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="3Xvwu5JOsTFl7TVjNNpy-20" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;" value="&lt;div style=&quot;text-align: center;&quot;&gt;&lt;b&gt;estimate.txt&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;text-align: center;&quot;&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;odometry output in format:&lt;/div&gt;&lt;div style=&quot;&quot;&gt;cloud_timestamp tx ty tz qx qy qz qw&lt;/div&gt;" vertex="1">
+          <mxGeometry height="160" width="220" x="-30" y="520" as="geometry" />
+        </mxCell>
+        <mxCell id="3Xvwu5JOsTFl7TVjNNpy-21" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="KDTree with maximum spread-based split" vertex="1">
+          <mxGeometry height="110" width="140" x="680" y="360" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
