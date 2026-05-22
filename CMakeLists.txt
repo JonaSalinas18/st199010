@@ -18,8 +18,6 @@ add_executable(point_cloud_processor_node
   src/PointCloudProcessor.cpp
 )
 
-#target_link_libraries(SensorFusion_node ${OpenCV_LIBRARIES} ${EIGEN3_LIBRARIES})
-
 ament_target_dependencies(point_cloud_processor_node
   rclcpp
   sensor_msgs
