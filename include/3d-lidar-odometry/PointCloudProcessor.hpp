@@ -23,7 +23,7 @@ class PointCloudProcessor : public rclcpp::Node
         bool IsFirstIteration;
         Eigen::Isometry3f T_odometry_current;
         Eigen::Isometry3f T_odometry_keyframe;
-        std::vector<Eigen::Vector3d> NewPointCloudReceived;
-        std::vector<Eigen::Vector3d> KeyFramePointCloud;
+        std::vector<Eigen::Vector3f> NewPointCloudReceived;
+        std::vector<Eigen::Vector3f> KeyFramePointCloud;
         rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr SubscriptionPtr;
 };

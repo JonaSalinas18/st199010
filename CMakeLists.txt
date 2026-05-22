@@ -16,7 +16,7 @@ include_directories(include)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
 add_executable(point_cloud_processor_node
-  #src/KdTree.cpp
+  src/KdTree.cpp
   src/PointCloudProcessor.cpp
 )
 

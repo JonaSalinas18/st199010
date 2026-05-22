@@ -1,11 +1,15 @@
+#pragma once
 
+//#include <rclcpp/rclcpp.hpp>    //incluir de nuevo?
+#include <Eigen/Geometry>
+#include <memory>
 
 class KdTree
 {
     public:
         KdTree() = default;
         
-        void buildTree(const std::vector<Eigen::Vector3d>& pointsVector);
+        void buildTree(const std::vector<Eigen::Vector3f>& pointsVector);
         //GetNearestNeighbor
 
     private:
@@ -18,11 +22,11 @@ class KdTree
             std::unique_ptr<Node> right;
             bool isLeaf;
 
-            Node(const Eigen::Vector3d& pt, int idx) : point(pt), index(idx), left(nullptr), right(nullptr) {}
+            //Node(const Eigen::Vector3d& pt, int idx) : point(pt), index(idx), left(nullptr), right(nullptr) {}
         };
 
         std::unique_ptr<Node> root;
 
-        float ComputeMean(const std::vector<Eigen::Vector3d>& points);
-        //Eigen::Matrix3f ComputeCovariance(const std::vector<Eigen::Vector3d);
-}
+        Eigen::Vector3f ComputeMean(const std::vector<Eigen::Vector3f>& points);
+        Eigen::Matrix3f ComputeCovariance(const std::vector<Eigen::Vector3f>& points, const Eigen::Vector3f& mean);
+};

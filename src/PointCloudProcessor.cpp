@@ -84,7 +84,7 @@ void PointCloudProcessor::ExtractPointsFromNewPointCloud(const sensor_msgs::msg:
 
             if((MinRange*MinRange < rangeSquared) && (rangeSquared < MaxRange*MaxRange) && (IntensityThreshold < intensity))
             {
-                Eigen::Vector3d newPoint(x, y, z);
+                Eigen::Vector3f newPoint(x, y, z);
                 NewPointCloudReceived.push_back(newPoint);
             }
         }
