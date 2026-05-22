@@ -12,9 +12,11 @@ find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 
+include_directories(include)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
 add_executable(point_cloud_processor_node
+  #src/KdTree.cpp
   src/PointCloudProcessor.cpp
 )
 
