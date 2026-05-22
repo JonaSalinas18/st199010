@@ -1,0 +1,8 @@
+point_cloud_processor_node:
+  ros__parameters:
+    minRange: 1
+    maxRange: 40
+    intensityThreshold: 11000
+    #int_neighborDistanceThreshold: 2
+    #bool_writeToFile: true
+    #bool para RVis aqui?
