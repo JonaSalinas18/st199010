@@ -1,35 +1,35 @@
 #include "3d-lidar-odometry/KdTree.hpp"
 #include <Eigen/Dense>
 
-void KdTree::buildTree(const std::vector<Eigen::Vector3f>& pointsVector)
+void KdTree::BuildTree(const std::vector<Eigen::Vector3f>& pointsVector)
 {
-    root = buildTreeRecursive(pointsVector);
+    Root = BuildTreeRecursive(pointsVector);
 }
 
-std::unique_ptr<KdTree::Node> KdTree::buildTreeRecursive(const std::vector<Eigen::Vector3f>& pointsVector)
+std::unique_ptr<KdTree::Node> KdTree::BuildTreeRecursive(const std::vector<Eigen::Vector3f>& pointsVector)
 {
     constexpr int PRINCIPAL_EIGENVECTOR_COLUMN_INDEX = 2;
     constexpr int NORMAL_EIGENVECTOR_COLUMN_INDEX = 0;
     constexpr int MIN_POINTS_THRESHOLD = 10;
     constexpr int ZERO_DISTANCE = 0;
 
-    KdTree::Node node;
+    auto nodePtr = std::make_unique<KdTree::Node>();
 
     Eigen::Vector3f mean = ComputeMean(pointsVector);
     Eigen::Matrix3f covariance = ComputeCovariance(pointsVector, mean);
     Eigen::SelfAdjointEigenSolver<Eigen::Matrix3f> eigen_solver(covariance);
     Eigen::Vector3f principal_eigenvector = eigen_solver.eigenvectors().col(PRINCIPAL_EIGENVECTOR_COLUMN_INDEX);
     
-    node.mean = mean;
-    node.splitDirection = principal_eigenvector;
+    nodePtr->mean = mean;
+    nodePtr->splitDirection = principal_eigenvector;
 
     if(pointsVector.size() <= MIN_POINTS_THRESHOLD)
     {
-        node.isLeaf = true;
-        node.left = nullptr;
-        node.right = nullptr;
-        node.normalVector = eigen_solver.eigenvectors().col(NORMAL_EIGENVECTOR_COLUMN_INDEX);
-        node.points = pointsVector;
+        nodePtr->isLeaf = true;
+        nodePtr->left = nullptr;
+        nodePtr->right = nullptr;
+        nodePtr->normalVector = eigen_solver.eigenvectors().col(NORMAL_EIGENVECTOR_COLUMN_INDEX);
+        nodePtr->points = pointsVector;
     }
     else
     {
@@ -46,21 +46,19 @@ std::unique_ptr<KdTree::Node> KdTree::buildTreeRecursive(const std::vector<Eigen
         
         if(left_points.empty() || right_points.empty())
         {
-            node.isLeaf = true;
-            node.left = nullptr;
-            node.right = nullptr;
-            node.normalVector = eigen_solver.eigenvectors().col(NORMAL_EIGENVECTOR_COLUMN_INDEX);
-            node.points = pointsVector;
+            nodePtr->isLeaf = true;
+            nodePtr->left = nullptr;
+            nodePtr->right = nullptr;
+            nodePtr->normalVector = eigen_solver.eigenvectors().col(NORMAL_EIGENVECTOR_COLUMN_INDEX);
+            nodePtr->points = pointsVector;
         }
         else
         {
-            node.isLeaf = false;
-            node.left = buildTreeRecursive(left_points);
-            node.right = buildTreeRecursive(right_points);
+            nodePtr->isLeaf = false;
+            nodePtr->left = BuildTreeRecursive(left_points);
+            nodePtr->right = BuildTreeRecursive(right_points);
         }
     }
-
-    std::unique_ptr<KdTree::Node> nodePtr = std::make_unique<KdTree::Node>(node);
 
     return nodePtr;
 }

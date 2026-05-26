@@ -35,7 +35,7 @@ void PointCloudProcessor::PointCloud_Callback(const sensor_msgs::msg::PointCloud
     if(IsFirstIteration)
     {
         KeyFramePointCloud = NewPointCloudReceived;
-        //KdTree.buildTree(KeyFramePointCloud);
+        //KdTree.BuildTree(KeyFramePointCloud);
         T_odometry_keyframe = Eigen::Isometry3f::Identity();
 
         IsFirstIteration = false;

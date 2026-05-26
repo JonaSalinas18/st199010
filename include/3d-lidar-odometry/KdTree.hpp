@@ -8,7 +8,7 @@ class KdTree
     public:
         KdTree() = default;
         
-        void buildTree(const std::vector<Eigen::Vector3f>& pointsVector);
+        void BuildTree(const std::vector<Eigen::Vector3f>& pointsVector);
         //std::unique_ptr<Node> GetNearestNeighbor(const Eigen::Vector3f& queryPoint);
         //GetNearestNeighbor
 
@@ -22,13 +22,11 @@ class KdTree
             std::unique_ptr<Node> right;
             std::vector<Eigen::Vector3f> points;
             bool isLeaf;
-
-            //Node(const Eigen::Vector3d& pt, int idx) : point(pt), index(idx), left(nullptr), right(nullptr) {}
         };
 
-        std::unique_ptr<Node> root;
+        std::unique_ptr<Node> Root;
 
         Eigen::Vector3f ComputeMean(const std::vector<Eigen::Vector3f>& points);
         Eigen::Matrix3f ComputeCovariance(const std::vector<Eigen::Vector3f>& points, const Eigen::Vector3f& mean);
-        std::unique_ptr<Node> buildTreeRecursive(const std::vector<Eigen::Vector3f>& pointsVector);
+        std::unique_ptr<Node> BuildTreeRecursive(const std::vector<Eigen::Vector3f>& pointsVector);
 };
