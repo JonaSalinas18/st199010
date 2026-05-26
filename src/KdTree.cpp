@@ -15,39 +15,54 @@ std::unique_ptr<KdTree::Node> KdTree::buildTreeRecursive(const std::vector<Eigen
 
     KdTree::Node node;
 
-    if(pointsVector.size() < MIN_POINTS_THRESHOLD)
-    {
-        node.isLeaf = true;
-        //guardar points?
-        //return
-    }
-
     Eigen::Vector3f mean = ComputeMean(pointsVector);
     Eigen::Matrix3f covariance = ComputeCovariance(pointsVector, mean);
     Eigen::SelfAdjointEigenSolver<Eigen::Matrix3f> eigen_solver(covariance);
     Eigen::Vector3f principal_eigenvector = eigen_solver.eigenvectors().col(PRINCIPAL_EIGENVECTOR_COLUMN_INDEX);
-    Eigen::Vector3f normal_vector = eigen_solver.eigenvectors().col(NORMAL_EIGENVECTOR_COLUMN_INDEX);
-
-    std::vector<Eigen::Vector3f> left_points;
-    std::vector<Eigen::Vector3f> right_points;
-
-    for (const auto& point : pointsVector)
-    {
-        if (principal_eigenvector.dot(point - mean) > ZERO_DISTANCE)
-            right_points.push_back(point);
-        else
-            left_points.push_back(point);
-    }
- 
+    
     node.mean = mean;
     node.splitDirection = principal_eigenvector;
-    node.normalVector = normal_vector;
-    node.left = buildTreeRecursive(left_points);
-    node.right = buildTreeRecursive(right_points);
 
-    std::unique_ptr<KdTree::Node> node_ptr = std::make_unique<KdTree::Node>(node);
+    if(pointsVector.size() <= MIN_POINTS_THRESHOLD)
+    {
+        node.isLeaf = true;
+        node.left = nullptr;
+        node.right = nullptr;
+        node.normalVector = eigen_solver.eigenvectors().col(NORMAL_EIGENVECTOR_COLUMN_INDEX);
+        node.points = pointsVector;
+    }
+    else
+    {
+        std::vector<Eigen::Vector3f> left_points;
+        std::vector<Eigen::Vector3f> right_points;
 
-    return node_ptr;
+        for (const auto& point : pointsVector)
+        {
+            if (principal_eigenvector.dot(point - mean) > ZERO_DISTANCE)
+                right_points.push_back(point);
+            else
+                left_points.push_back(point);
+        }
+        
+        if(left_points.empty() || right_points.empty())
+        {
+            node.isLeaf = true;
+            node.left = nullptr;
+            node.right = nullptr;
+            node.normalVector = eigen_solver.eigenvectors().col(NORMAL_EIGENVECTOR_COLUMN_INDEX);
+            node.points = pointsVector;
+        }
+        else
+        {
+            node.isLeaf = false;
+            node.left = buildTreeRecursive(left_points);
+            node.right = buildTreeRecursive(right_points);
+        }
+    }
+
+    std::unique_ptr<KdTree::Node> nodePtr = std::make_unique<KdTree::Node>(node);
+
+    return nodePtr;
 }
 
 Eigen::Vector3f KdTree::ComputeMean(const std::vector<Eigen::Vector3f>& points)

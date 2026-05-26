@@ -20,6 +20,7 @@ class KdTree
             Eigen::Vector3f normalVector;
             std::unique_ptr<Node> left;
             std::unique_ptr<Node> right;
+            std::vector<Eigen::Vector3f> points;
             bool isLeaf;
 
             //Node(const Eigen::Vector3d& pt, int idx) : point(pt), index(idx), left(nullptr), right(nullptr) {}
