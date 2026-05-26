@@ -7,10 +7,17 @@ class KdTree
 {
     public:
         KdTree() = default;
+
+        struct NearestNeighborResult
+        {
+            Eigen::Vector3f point;
+            Eigen::Vector3f normal;
+            float distance; //algo mas aqui?
+            bool found;
+        };
         
         void BuildTree(const std::vector<Eigen::Vector3f>& pointsVector);
-        //std::unique_ptr<Node> GetNearestNeighbor(const Eigen::Vector3f& queryPoint);
-        //GetNearestNeighbor
+        NearestNeighborResult GetNearestNeighbor(const Eigen::Vector3f& queryPoint);
 
     private:
         struct Node
@@ -29,4 +36,5 @@ class KdTree
         Eigen::Vector3f ComputeMean(const std::vector<Eigen::Vector3f>& points);
         Eigen::Matrix3f ComputeCovariance(const std::vector<Eigen::Vector3f>& points, const Eigen::Vector3f& mean);
         std::unique_ptr<Node> BuildTreeRecursive(const std::vector<Eigen::Vector3f>& pointsVector);
+        void GetNearestNeighborRecursive(const std::unique_ptr<Node>& node, const Eigen::Vector3f& queryPoint, NearestNeighborResult& bestResult);
 };

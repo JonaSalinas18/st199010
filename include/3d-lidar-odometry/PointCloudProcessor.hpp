@@ -5,7 +5,7 @@
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 #include <Eigen/Geometry>
 
-//class KDTree;
+class KdTree;
 
 class PointCloudProcessor : public rclcpp::Node
 {
@@ -27,6 +27,6 @@ class PointCloudProcessor : public rclcpp::Node
         Eigen::Isometry3f T_odometry_keyframe;
         std::vector<Eigen::Vector3f> NewPointCloudReceived;
         std::vector<Eigen::Vector3f> KeyFramePointCloud;
-        //KdTree KdTree;
+        KdTree KdTreeInstance;
         rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr SubscriptionPtr;
 };

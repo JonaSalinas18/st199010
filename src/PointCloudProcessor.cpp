@@ -1,3 +1,4 @@
+#include "3d-lidar-odometry/KdTree.hpp"
 #include "3d-lidar-odometry/PointCloudProcessor.hpp"
 
 using std::placeholders::_1;
@@ -21,6 +22,7 @@ PointCloudProcessor:: PointCloudProcessor()
 , T_odometry_keyframe(Eigen::Isometry3f::Identity())
 , NewPointCloudReceived()
 , KeyFramePointCloud()
+, KdTreeInstance()
 {
     SetupParameters();
 
@@ -35,7 +37,7 @@ void PointCloudProcessor::PointCloud_Callback(const sensor_msgs::msg::PointCloud
     if(IsFirstIteration)
     {
         KeyFramePointCloud = NewPointCloudReceived;
-        //KdTree.BuildTree(KeyFramePointCloud);
+        KdTreeInstance.BuildTree(KeyFramePointCloud);
         T_odometry_keyframe = Eigen::Isometry3f::Identity();
 
         IsFirstIteration = false;

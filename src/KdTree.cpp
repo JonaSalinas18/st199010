@@ -1,6 +1,11 @@
 #include "3d-lidar-odometry/KdTree.hpp"
 #include <Eigen/Dense>
 
+namespace
+{
+    constexpr float ZERO_DISTANCE = 0;
+}
+
 void KdTree::BuildTree(const std::vector<Eigen::Vector3f>& pointsVector)
 {
     Root = BuildTreeRecursive(pointsVector);
@@ -11,7 +16,6 @@ std::unique_ptr<KdTree::Node> KdTree::BuildTreeRecursive(const std::vector<Eigen
     constexpr int PRINCIPAL_EIGENVECTOR_COLUMN_INDEX = 2;
     constexpr int NORMAL_EIGENVECTOR_COLUMN_INDEX = 0;
     constexpr int MIN_POINTS_THRESHOLD = 10;
-    constexpr int ZERO_DISTANCE = 0;
 
     auto nodePtr = std::make_unique<KdTree::Node>();
 
@@ -84,4 +88,46 @@ Eigen::Matrix3f KdTree::ComputeCovariance(const std::vector<Eigen::Vector3f>& po
      }
 
     return covariance / points.size();
+}
+
+KdTree::NearestNeighborResult KdTree::GetNearestNeighbor(const Eigen::Vector3f& queryPoint)
+{
+    NearestNeighborResult bestNeighbor;
+    bestNeighbor.found = false;
+    bestNeighbor.distance = std::numeric_limits<float>::max();
+
+    GetNearestNeighborRecursive(Root, queryPoint, bestNeighbor);
+
+    return bestNeighbor;
+}
+
+void KdTree::GetNearestNeighborRecursive(const std::unique_ptr<Node>& node, const Eigen::Vector3f& queryPoint, NearestNeighborResult& bestResult)
+{
+    if(node->isLeaf)
+    {
+        for (const auto& point : node->points)
+        {
+            float pointDistance = (queryPoint - point).norm();
+            if (pointDistance < bestResult.distance)
+            {
+                bestResult.point = point;
+                bestResult.normal = node->normalVector;
+                bestResult.distance = pointDistance;
+                bestResult.found = true;        //es util?
+            }
+        }
+    }
+    else
+    {
+        float splitDistance = node->splitDirection.dot(queryPoint - node->mean);
+        const std::unique_ptr<Node>& firstSearch = splitDistance > ZERO_DISTANCE ? node->right : node->left;
+        const std::unique_ptr<Node>& secondSearch = splitDistance > ZERO_DISTANCE ? node->left : node->right;
+
+        GetNearestNeighborRecursive(firstSearch, queryPoint, bestResult);
+
+        if (std::abs(splitDistance) < bestResult.distance)
+        {
+            GetNearestNeighborRecursive(secondSearch, queryPoint, bestResult);
+        }
+    }
 }
