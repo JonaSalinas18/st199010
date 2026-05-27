@@ -35,22 +35,36 @@ PointCloudProcessor:: PointCloudProcessor()
 
 void PointCloudProcessor::PointCloud_Callback(const sensor_msgs::msg::PointCloud2::SharedPtr pointCloudMsg)
 {
-    ExtractPointsFromNewPointCloud(pointCloudMsg);
+    ExtractPointsFromNewPointCloud(pointCloudMsg);  //que regrese un vector de puntos en vez de llenar el atributo de la clase?
 
     if(IsFirstIteration)
     {
         KeyFramePointCloud = NewPointCloudReceived;
-        KdTreeInstance.BuildTree(KeyFramePointCloud);
+        KdTreeInstance.BuildTree(KeyFramePointCloud);       //seria posible incluso quitar KeyframePointCloud y construir el kdTree directamente con NewPointCloudReceived?
         T_odometry_keyframe = Eigen::Isometry3f::Identity();
 
         IsFirstIteration = false;
     }
     else
     {
-        //KeyFrameCounter++;
+        KeyFrameCounter++;
+
+        IterativeClosestPoint(NewPointCloudReceived);   //quitar el parametro?
+
+        T_odometry_current = T_odometry_keyframe * T_keyframe_current;
+
+        if(KeyFrameCounter == KeyFrameStepsUpdateThreshold)
+        {
+            KeyFramePointCloud = NewPointCloudReceived;
+            KdTreeInstance.BuildTree(KeyFramePointCloud);
+
+            T_odometry_keyframe = T_odometry_current;
+
+            KeyFrameCounter = 0;
+        }
     }
     
-    RCLCPP_INFO(this->get_logger(), "Recibi nueva nube de puntos. MinRange: %d, MaxRange: %d, IntensityThreshold: %d", MinRange, MaxRange, IntensityThreshold);
+    //CLCPP_INFO(this->get_logger(), "Recibi nueva nube de puntos. MinRange: %d, MaxRange: %d, IntensityThreshold: %d", MinRange, MaxRange, IntensityThreshold);
 }
 
 void PointCloudProcessor::SetupParameters()
