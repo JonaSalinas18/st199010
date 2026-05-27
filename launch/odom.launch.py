@@ -1,15 +1,26 @@
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument
+from launch.conditions import IfCondition
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 import os
 
 def generate_launch_description():
     launchDescription = LaunchDescription()
 
+    useRvizArg = LaunchConfiguration('useRviz')
+
     config = os.path.join(
         get_package_share_directory('3d-lidar-odometry'),
         'config',
         'params.yaml'
+    )
+
+    declareLaunchArg = DeclareLaunchArgument(
+        'useRviz',
+        default_value = 'false',
+        description = 'Launch RViz or not'
     )
 
     pointCloudProcessor = Node(
@@ -18,6 +29,15 @@ def generate_launch_description():
         parameters = [config]
     )
 
+    rVizNode = Node(
+        package = "rviz2",
+        executable = "rviz2",
+        condition = IfCondition(useRvizArg),
+        output = 'screen'
+    )
+
+    launchDescription.add_action(declareLaunchArg)
     launchDescription.add_action(pointCloudProcessor)
+    launchDescription.add_action(rVizNode)
 
     return launchDescription
