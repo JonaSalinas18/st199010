@@ -8,9 +8,12 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(geometry_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
 
 include_directories(include)
 include_directories(${EIGEN3_INCLUDE_DIR})
@@ -21,11 +24,12 @@ add_executable(point_cloud_processor_node
 )
 
 ament_target_dependencies(point_cloud_processor_node
+  Eigen3
+  geometry_msgs
   rclcpp
   sensor_msgs
-  Eigen3
-  #geometry_msgs
-  #tf2_ros
+  tf2
+  tf2_ros 
 )
 
 install(TARGETS

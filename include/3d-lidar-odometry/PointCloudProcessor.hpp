@@ -3,6 +3,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
+#include <tf2_ros/transform_broadcaster.h>
 #include <Eigen/Geometry>
 
 class KdTree;
@@ -17,6 +18,7 @@ class PointCloudProcessor : public rclcpp::Node
         void SetupParameters();
         void ExtractPointsFromNewPointCloud(const sensor_msgs::msg::PointCloud2::SharedPtr pointCloudMsg);
         void IterativeClosestPoint(const std::vector<Eigen::Vector3f>& newPointCloudPoints);
+        void PublishTransform(const rclcpp::Time& timestamp);
         Eigen::Matrix3f GetSkewMatrix(const Eigen::Vector3f& point);
         Eigen::Matrix3f ComputeExpSO3(const Eigen::Vector3f& rotationVector);
 
@@ -34,4 +36,5 @@ class PointCloudProcessor : public rclcpp::Node
         std::vector<Eigen::Vector3f> KeyFramePointCloud;
         KdTree KdTreeInstance;
         rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr SubscriptionPtr;
+        std::unique_ptr<tf2_ros::TransformBroadcaster> TfBroadcaster;
 };

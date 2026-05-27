@@ -1,5 +1,7 @@
 #include "3d-lidar-odometry/KdTree.hpp"
-#include "3d-lidar-odometry/PointCloudProcessor.hpp"
+#include "3d-lidar-odometry/PointCloudProcessor.hpp"        //modificar el nombre del paquete
+#include "geometry_msgs/msg/transform_stamped.hpp"
+#include "tf2/LinearMath/Quaternion.h"      //?
 
 using std::placeholders::_1;
 
@@ -30,7 +32,7 @@ PointCloudProcessor:: PointCloudProcessor()
     SetupParameters();
 
     SubscriptionPtr = this->create_subscription<sensor_msgs::msg::PointCloud2>("/ouster/points", rclcpp::SensorDataQoS(), std::bind(&PointCloudProcessor::PointCloud_Callback, this, _1));
-
+    TfBroadcaster = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 }
 
 void PointCloudProcessor::PointCloud_Callback(const sensor_msgs::msg::PointCloud2::SharedPtr pointCloudMsg)
@@ -64,6 +66,8 @@ void PointCloudProcessor::PointCloud_Callback(const sensor_msgs::msg::PointCloud
         }
     }
     
+    PublishTransform(pointCloudMsg->header.stamp);     //parametros?
+
     //CLCPP_INFO(this->get_logger(), "Recibi nueva nube de puntos. MinRange: %d, MaxRange: %d, IntensityThreshold: %d", MinRange, MaxRange, IntensityThreshold);
 }
 
@@ -200,6 +204,29 @@ Eigen::Matrix3f PointCloudProcessor::ComputeExpSO3(const Eigen::Vector3f& rotati
     return validRotationMatrix;
 }
 
+void PointCloudProcessor::PublishTransform(const rclcpp::Time& timestamp)   //parametros?
+{
+    Eigen::Quaternionf quaternion(T_odometry_current.linear());
+    quaternion.normalize();
+
+    geometry_msgs::msg::TransformStamped transformMsg;
+
+    transformMsg.header.stamp = timestamp;
+    transformMsg.header.frame_id = "odom"; //??
+    transformMsg.child_frame_id = "cloud_frame";       //??
+
+    transformMsg.transform.translation.x = T_odometry_current.translation().x();
+    transformMsg.transform.translation.y = T_odometry_current.translation().y();
+    transformMsg.transform.translation.z = T_odometry_current.translation().z();
+
+    transformMsg.transform.rotation.x = quaternion.x();
+    transformMsg.transform.rotation.y = quaternion.y();
+    transformMsg.transform.rotation.z = quaternion.z();
+    transformMsg.transform.rotation.w = quaternion.w();
+
+    TfBroadcaster->sendTransform(transformMsg);
+}
+
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
@@ -208,9 +235,3 @@ int main(int argc, char * argv[])
   return 0;
 }
 
-/*
-    Probar:
-        -Que la subsripcion este correcta.
-
-
-*/
