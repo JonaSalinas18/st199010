@@ -16,13 +16,18 @@ class PointCloudProcessor : public rclcpp::Node
         void PointCloud_Callback(const sensor_msgs::msg::PointCloud2::SharedPtr pointCloudMsg);
         void SetupParameters();
         void ExtractPointsFromNewPointCloud(const sensor_msgs::msg::PointCloud2::SharedPtr pointCloudMsg);
+        void IterativeClosestPoint(const std::vector<Eigen::Vector3f>& newPointCloudPoints);
+        Eigen::Matrix3f GetSkewMatrix(const Eigen::Vector3f& point);
+        Eigen::Matrix3f ComputeExpSO3(const Eigen::Vector3f& rotationVector);
 
         int KeyFrameCounter;
         int KeyFrameStepsUpdateThreshold;       //poner como parametro extra?
         int MinRange;
         int MaxRange;
         int IntensityThreshold;
+        int MaximumNeighborDistanceThreshold;
         bool IsFirstIteration;
+        Eigen::Isometry3f T_keyframe_current;
         Eigen::Isometry3f T_odometry_current;
         Eigen::Isometry3f T_odometry_keyframe;
         std::vector<Eigen::Vector3f> NewPointCloudReceived;
