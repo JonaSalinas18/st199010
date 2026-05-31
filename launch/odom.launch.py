@@ -12,7 +12,7 @@ def generate_launch_description():
     useRvizArg = LaunchConfiguration('useRviz')
 
     config = os.path.join(
-        get_package_share_directory('3d-lidar-odometry'),
+        get_package_share_directory('st199010'),
         'config',
         'params.yaml'
     )
@@ -24,7 +24,7 @@ def generate_launch_description():
     )
 
     pointCloudProcessor = Node(
-        package = "3d-lidar-odometry",
+        package = "st199010",
         executable = "point_cloud_processor_node",
         parameters = [config]
     )

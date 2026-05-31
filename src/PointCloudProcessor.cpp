@@ -1,7 +1,7 @@
-#include "3d-lidar-odometry/KdTree.hpp"
-#include "3d-lidar-odometry/PointCloudProcessor.hpp"        //modificar el nombre del paquete
+#include "st199010/KdTree.hpp"
+#include "st199010/PointCloudProcessor.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
-#include "tf2/LinearMath/Quaternion.h"      //?
+#include "tf2/LinearMath/Quaternion.h"
 
 using std::placeholders::_1;
 
@@ -89,7 +89,7 @@ void PointCloudProcessor::ExtractPointsFromNewPointCloud(const sensor_msgs::msg:
     NewPointCloudReceived.clear();
     //NewPointCloudReceived.reserve(pointCloudMsg->width * pointCloudMsg->height);
 
-    sensor_msgs::PointCloud2ConstIterator<float> iter_x(*pointCloudMsg, "x");       //Meter esto en una funcion?
+    sensor_msgs::PointCloud2ConstIterator<float> iter_x(*pointCloudMsg, "x");
     sensor_msgs::PointCloud2ConstIterator<float> iter_y(*pointCloudMsg, "y");
     sensor_msgs::PointCloud2ConstIterator<float> iter_z(*pointCloudMsg, "z");
     sensor_msgs::PointCloud2ConstIterator<float> iter_intensity(*pointCloudMsg, "intensity");
@@ -213,7 +213,7 @@ void PointCloudProcessor::PublishTransform(const rclcpp::Time& timestamp)   //pa
 
     transformMsg.header.stamp = timestamp;
     transformMsg.header.frame_id = "odom"; //??
-    transformMsg.child_frame_id = "cloud_frame";       //??
+    transformMsg.child_frame_id = "cloud_frame";       //debe coincidir con el frame_id del mensaje de la nube de puntos
 
     transformMsg.transform.translation.x = T_odometry_current.translation().x();
     transformMsg.transform.translation.y = T_odometry_current.translation().y();

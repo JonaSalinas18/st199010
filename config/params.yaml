@@ -5,4 +5,3 @@ point_cloud_processor_node:
     intensityThreshold: 11000
     maximumNeighborDistanceThreshold: 2
     #bool_writeToFile: true
-    #bool para RVis aqui?
