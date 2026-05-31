@@ -1,4 +1,3 @@
-#include "st199010/KdTree.hpp"
 #include "st199010/PointCloudProcessor.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "tf2/LinearMath/Quaternion.h"
@@ -11,11 +10,12 @@ namespace
     constexpr int MAX_RANGE_DEFAULT = 100;
     constexpr int INTENSITY_THRESHOLD_DEFAULT = 9000;
     constexpr int MAXIMUM_NEIGHBOR_DISTANCE_THRESHOLD_DEFAULT = 2;
+    constexpr int RESET_KEYFRAME_COUNTER = 0;
 }
 
 PointCloudProcessor:: PointCloudProcessor()
 : Node("point_cloud_processor_node")
-, KeyFrameCounter(0)
+, KeyFrameCounter(RESET_KEYFRAME_COUNTER)
 , KeyFrameStepsUpdateThreshold(3)
 , MinRange(MIN_RANGE_DEFAULT)
 , MaxRange(MAX_RANGE_DEFAULT)
@@ -62,7 +62,7 @@ void PointCloudProcessor::PointCloud_Callback(const sensor_msgs::msg::PointCloud
 
             T_odometry_keyframe = T_odometry_current;
 
-            KeyFrameCounter = 0;
+            KeyFrameCounter = RESET_KEYFRAME_COUNTER;
         }
     }
     
@@ -226,12 +226,3 @@ void PointCloudProcessor::PublishTransform(const rclcpp::Time& timestamp, const 
 
     TfBroadcaster->sendTransform(transformMsg);
 }
-
-int main(int argc, char * argv[])
-{
-  rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<PointCloudProcessor>());
-  rclcpp::shutdown();
-  return 0;
-}
-

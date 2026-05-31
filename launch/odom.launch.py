@@ -7,6 +7,7 @@ from launch_ros.actions import Node
 import os
 
 def generate_launch_description():
+    
     launchDescription = LaunchDescription()
 
     useRvizArg = LaunchConfiguration('useRviz')
@@ -19,21 +20,22 @@ def generate_launch_description():
 
     declareLaunchArg = DeclareLaunchArgument(
         'useRviz',
-        default_value = 'false',
-        description = 'Launch RViz or not'
+        default_value='false',
+        description='Launch RViz or not'
     )
 
     pointCloudProcessor = Node(
-        package = "st199010",
-        executable = "point_cloud_processor_node",
-        parameters = [config]
+        package="st199010",
+        executable="point_cloud_processor_node",
+        parameters=[config, {'use_sim_time': True}]
     )
 
     rVizNode = Node(
-        package = "rviz2",
-        executable = "rviz2",
-        condition = IfCondition(useRvizArg),
-        output = 'screen'
+        package="rviz2",
+        executable="rviz2",
+        condition=IfCondition(useRvizArg),
+        output='screen',
+        parameters=[{'use_sim_time': True}]
     )
 
     launchDescription.add_action(declareLaunchArg)
