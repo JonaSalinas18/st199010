@@ -18,7 +18,7 @@ class PointCloudProcessor : public rclcpp::Node
         void SetupParameters();
         void ExtractPointsFromNewPointCloud(const sensor_msgs::msg::PointCloud2::SharedPtr pointCloudMsg);
         void IterativeClosestPoint(const std::vector<Eigen::Vector3f>& newPointCloudPoints);
-        void PublishTransform(const rclcpp::Time& timestamp);
+        void PublishTransform(const rclcpp::Time& timestamp, const std::string& frame_id);
         Eigen::Matrix3f GetSkewMatrix(const Eigen::Vector3f& point);
         Eigen::Matrix3f ComputeExpSO3(const Eigen::Vector3f& rotationVector);
 

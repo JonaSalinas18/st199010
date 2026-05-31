@@ -66,7 +66,7 @@ void PointCloudProcessor::PointCloud_Callback(const sensor_msgs::msg::PointCloud
         }
     }
     
-    PublishTransform(pointCloudMsg->header.stamp);     //parametros?
+    PublishTransform(pointCloudMsg->header.stamp, pointCloudMsg->header.frame_id);     //parametros?
 
     //CLCPP_INFO(this->get_logger(), "Recibi nueva nube de puntos. MinRange: %d, MaxRange: %d, IntensityThreshold: %d", MinRange, MaxRange, IntensityThreshold);
 }
@@ -204,7 +204,7 @@ Eigen::Matrix3f PointCloudProcessor::ComputeExpSO3(const Eigen::Vector3f& rotati
     return validRotationMatrix;
 }
 
-void PointCloudProcessor::PublishTransform(const rclcpp::Time& timestamp)   //parametros?
+void PointCloudProcessor::PublishTransform(const rclcpp::Time& timestamp, const std::string& frame_id)   //parametros?
 {
     Eigen::Quaternionf quaternion(T_odometry_current.linear());
     quaternion.normalize();
@@ -212,8 +212,8 @@ void PointCloudProcessor::PublishTransform(const rclcpp::Time& timestamp)   //pa
     geometry_msgs::msg::TransformStamped transformMsg;
 
     transformMsg.header.stamp = timestamp;
-    transformMsg.header.frame_id = "odom"; //??
-    transformMsg.child_frame_id = "cloud_frame";       //debe coincidir con el frame_id del mensaje de la nube de puntos
+    transformMsg.header.frame_id = "odom_frame";
+    transformMsg.child_frame_id = frame_id;
 
     transformMsg.transform.translation.x = T_odometry_current.translation().x();
     transformMsg.transform.translation.y = T_odometry_current.translation().y();
