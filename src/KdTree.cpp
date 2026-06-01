@@ -3,7 +3,7 @@
 
 namespace
 {
-    constexpr float ZERO_DISTANCE = 0;
+    constexpr float ZERO_DISTANCE = 0.0f;
 }
 
 void KdTree::BuildTree(const std::vector<Eigen::Vector3f>& pointsVector)
@@ -107,12 +107,12 @@ void KdTree::GetNearestNeighborRecursive(const std::unique_ptr<Node>& node, cons
     {
         for (const auto& point : node->points)
         {
-            float pointDistance = (queryPoint - point).norm();
-            if (pointDistance < bestResult.distance)
+            float euclideanDistance = (queryPoint - point).norm();      //replace for SquaredDistance?
+            if (euclideanDistance < bestResult.distance)
             {
                 bestResult.point = point;
                 bestResult.normal = node->normalVector;
-                bestResult.distance = pointDistance;
+                bestResult.distance = euclideanDistance;
                 bestResult.found = true;        //es util?
             }
         }
@@ -125,7 +125,7 @@ void KdTree::GetNearestNeighborRecursive(const std::unique_ptr<Node>& node, cons
 
         GetNearestNeighborRecursive(firstSearch, queryPoint, bestResult);
 
-        if (std::abs(splitDistance) < bestResult.distance)
+        if (std::abs(splitDistance) < bestResult.distance)      //revisar
         {
             GetNearestNeighborRecursive(secondSearch, queryPoint, bestResult);
         }
