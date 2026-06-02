@@ -2,6 +2,6 @@ point_cloud_processor_node:
   ros__parameters:
     minRange: 1
     maxRange: 40
-    intensityThreshold: 11000
-    maximumNeighborDistanceThreshold: 2
+    intensityThreshold: 1100
+    maximumNeighborDistanceThreshold: 25
     #bool_writeToFile: true

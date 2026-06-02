@@ -46,12 +46,18 @@ void PointCloudProcessor::PointCloud_Callback(const sensor_msgs::msg::PointCloud
         T_odometry_keyframe = Eigen::Isometry3f::Identity();
 
         IsFirstIteration = false;
+
+        RCLCPP_INFO(this->get_logger(), "Que onda bandamax");
     }
     else
     {
         KeyFrameCounter++;
 
+        RCLCPP_INFO(this->get_logger(), "Voy a meterme a ICP, puntos en newPointCloud: %zu", NewPointCloudReceived.size());
+        
         IterativeClosestPoint(NewPointCloudReceived);   //quitar el parametro?
+
+        RCLCPP_INFO(this->get_logger(), "Termine ICP");
 
         T_odometry_current = T_odometry_keyframe * T_keyframe_current;
 
@@ -61,13 +67,16 @@ void PointCloudProcessor::PointCloud_Callback(const sensor_msgs::msg::PointCloud
             KdTreeInstance.BuildTree(KeyFramePointCloud);
 
             T_odometry_keyframe = T_odometry_current;
+            T_keyframe_current = Eigen::Isometry3f::Identity();
 
             KeyFrameCounter = RESET_KEYFRAME_COUNTER;
         }
+
+        RCLCPP_INFO(this->get_logger(), "Voy a publicar transform");
+        PublishTransform(pointCloudMsg->header.stamp, pointCloudMsg->header.frame_id);     //parametros?
     }
     
-    PublishTransform(pointCloudMsg->header.stamp, pointCloudMsg->header.frame_id);     //parametros?
-
+    
     //CLCPP_INFO(this->get_logger(), "Recibi nueva nube de puntos. MinRange: %d, MaxRange: %d, IntensityThreshold: %d", MinRange, MaxRange, IntensityThreshold);
 }
 
@@ -119,6 +128,7 @@ void PointCloudProcessor::IterativeClosestPoint(const std::vector<Eigen::Vector3
     constexpr int MAX_ICP_ITERATIONS = 10;
     constexpr float ROTATION_EPSILON = 1e-4;
     constexpr float TRANSLATION_EPSILON = 1e-4;
+    constexpr int SUBSAMPLING_STEP = 10;
 
     Eigen::Matrix3f R = T_keyframe_current.linear();
     Eigen::Vector3f t = T_keyframe_current.translation();
@@ -128,8 +138,11 @@ void PointCloudProcessor::IterativeClosestPoint(const std::vector<Eigen::Vector3
         Eigen::MatrixXf H = Eigen::MatrixXf::Zero(6, 6);
         Eigen::VectorXf b = Eigen::VectorXf::Zero(6);
 
-        for(const auto& point : newPointCloudPoints)
+        //for(const auto& point : newPointCloudPoints)
+        for(size_t i = 0; i < newPointCloudPoints.size(); i += SUBSAMPLING_STEP)
         {
+            const auto& point = newPointCloudPoints[i];
+
             Eigen::Vector3f pTransformed = R * point + t;
 
             KdTree::NearestNeighborResult nearestNeighborResult = KdTreeInstance.GetNearestNeighbor(pTransformed);
@@ -206,6 +219,8 @@ Eigen::Matrix3f PointCloudProcessor::ComputeExpSO3(const Eigen::Vector3f& rotati
 
 void PointCloudProcessor::PublishTransform(const rclcpp::Time& timestamp, const std::string& frame_id)   //parametros?
 {
+    RCLCPP_INFO(this->get_logger(), "Voy a publicar translation x: %0.1f, y: %0.1f, z: %0.1f", T_odometry_current.translation().x(), T_odometry_current.translation().y(), T_odometry_current.translation().z());
+
     Eigen::Quaternionf quaternion(T_odometry_current.linear());
     quaternion.normalize();
 

@@ -107,12 +107,12 @@ void KdTree::GetNearestNeighborRecursive(const std::unique_ptr<Node>& node, cons
     {
         for (const auto& point : node->points)
         {
-            float euclideanDistance = (queryPoint - point).norm();      //replace for SquaredDistance?
-            if (euclideanDistance < bestResult.distance)
+            float euclideanDistanceSq = (queryPoint - point).squaredNorm();      //replace for SquaredDistance?
+            if (euclideanDistanceSq < bestResult.distance)
             {
                 bestResult.point = point;
                 bestResult.normal = node->normalVector;
-                bestResult.distance = euclideanDistance;
+                bestResult.distance = euclideanDistanceSq;
                 bestResult.found = true;        //es util?
             }
         }

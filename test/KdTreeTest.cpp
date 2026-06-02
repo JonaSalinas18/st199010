@@ -88,11 +88,11 @@ TEST(KdTreeTest, GivenKdTreeNearestNeighborQuery_ThenResultIsTheSameAsBruteForce
 
     for(const auto& point : samplePointCloud)
     {
-        float euclideanDistance = (queryPoint - point).norm();
+        float euclideanDistanceSq = (queryPoint - point).squaredNorm();
 
-        if (euclideanDistance < shortestDistance)
+        if (euclideanDistanceSq < shortestDistance)
         {
-            shortestDistance = euclideanDistance;
+            shortestDistance = euclideanDistanceSq;
             bruteForceNearestNeighbor = point;
         }
     }
