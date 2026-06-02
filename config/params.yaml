@@ -4,4 +4,4 @@ point_cloud_processor_node:
     maxRange: 40
     intensityThreshold: 1100
     maximumNeighborDistanceThreshold: 1
-    #bool_writeToFile: true
+    writeToFile: true

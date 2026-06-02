@@ -21,18 +21,29 @@ PointCloudProcessor:: PointCloudProcessor()
 , MaxRange(MAX_RANGE_DEFAULT)
 , IntensityThreshold(INTENSITY_THRESHOLD_DEFAULT)
 , MaximumNeighborDistanceThreshold(MAXIMUM_NEIGHBOR_DISTANCE_THRESHOLD_DEFAULT)
+, WriteToFile(true)
 , IsFirstIteration(true)
 , T_keyframe_current(Eigen::Isometry3f::Identity())
 , T_odometry_current(Eigen::Isometry3f::Identity())
 , T_odometry_keyframe(Eigen::Isometry3f::Identity())
 , NewPointCloudReceived()
 , KeyFramePointCloud()
+, TrajectoryFile()
 , KdTreeInstance()
 {
     SetupParameters();
+    OpenFileToWriteTrajectory();
 
     SubscriptionPtr = this->create_subscription<sensor_msgs::msg::PointCloud2>("/ouster/points", rclcpp::SensorDataQoS(), std::bind(&PointCloudProcessor::PointCloud_Callback, this, _1));
     TfBroadcaster = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
+}
+
+PointCloudProcessor::~PointCloudProcessor()
+{
+    if(TrajectoryFile.is_open())
+    {
+        TrajectoryFile.close();
+    }
 }
 
 void PointCloudProcessor::PointCloud_Callback(const sensor_msgs::msg::PointCloud2::SharedPtr pointCloudMsg)
@@ -75,6 +86,7 @@ void PointCloudProcessor::PointCloud_Callback(const sensor_msgs::msg::PointCloud
     }
     
     PublishTransform(pointCloudMsg->header.stamp, pointCloudMsg->header.frame_id);     //parametros?
+    WriteOdometryToFile(pointCloudMsg->header.stamp);
 }
 
 void PointCloudProcessor::SetupParameters()
@@ -83,11 +95,31 @@ void PointCloudProcessor::SetupParameters()
     this->declare_parameter<int>("maxRange", MAX_RANGE_DEFAULT);
     this->declare_parameter<int>("intensityThreshold", INTENSITY_THRESHOLD_DEFAULT);
     this->declare_parameter<int>("maximumNeighborDistanceThreshold", MAXIMUM_NEIGHBOR_DISTANCE_THRESHOLD_DEFAULT);
+    this->declare_parameter<bool>("writeToFile", true);
 
     this->get_parameter("minRange", MinRange);
     this->get_parameter("maxRange", MaxRange);
     this->get_parameter("intensityThreshold", IntensityThreshold);
     this->get_parameter("maximumNeighborDistanceThreshold", MaximumNeighborDistanceThreshold);
+    this->get_parameter("writeToFile", WriteToFile);
+}
+
+void PointCloudProcessor::OpenFileToWriteTrajectory()
+{
+    if(WriteToFile)
+    {
+        TrajectoryFile.open("./estimate.txt");
+
+        if(TrajectoryFile.is_open())
+        {
+            TrajectoryFile << "# timestamp x y z qx qy qz qw\n";
+            RCLCPP_INFO(this->get_logger(), "File opened successfully for writing trajectory.");
+        }
+        else
+        {
+            RCLCPP_ERROR(this->get_logger(), "Failed to open file for writing trajectory.");
+        }
+    }
 }
 
 void PointCloudProcessor::ExtractPointsFromNewPointCloud(const sensor_msgs::msg::PointCloud2::SharedPtr pointCloudMsg)
@@ -209,11 +241,11 @@ void PointCloudProcessor::IterativeClosestPoint(const std::vector<Eigen::Vector3
 
             RCLCPP_INFO(this->get_logger(), "dr_norm: %0.6f, dt_norm: %0.6f", dr.norm(), dt.norm());
 
-            if(dr.norm() > 0.08f || dt.norm() > 0.15f)
-            {
-                RCLCPP_WARN(this->get_logger(), "Large transformation update detected. Breaking ICP iteration.");
-                break;
-            }
+            //if(dr.norm() > 0.08f || dt.norm() > 0.15f)
+            //{
+            //    RCLCPP_WARN(this->get_logger(), "Large transformation update detected. Breaking ICP iteration.");
+            //    break;
+            //}
 
 
             R = R * ComputeExpSO3(dr);
@@ -291,6 +323,23 @@ void PointCloudProcessor::PublishTransform(const rclcpp::Time& timestamp, const 
     TfBroadcaster->sendTransform(transformMsg);
 }
 
+void PointCloudProcessor::WriteOdometryToFile(const rclcpp::Time& timestamp)
+{
+    if(WriteToFile && TrajectoryFile.is_open())
+    {
+        Eigen::Quaternionf quaternion(T_odometry_current.linear());
+        quaternion.normalize();
+
+        TrajectoryFile << std::fixed << std::setprecision(6) << timestamp.seconds() << " "
+                       << T_odometry_current.translation().x() << " "
+                       << T_odometry_current.translation().y() << " "
+                       << T_odometry_current.translation().z() << " "
+                       << quaternion.x() << " "
+                       << quaternion.y() << " "
+                       << quaternion.z() << " "
+                       << quaternion.w() << "\n";
+    }
+}
 
 /*
     Cosas que checar:
