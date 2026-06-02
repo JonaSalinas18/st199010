@@ -37,6 +37,8 @@ PointCloudProcessor:: PointCloudProcessor()
 
 void PointCloudProcessor::PointCloud_Callback(const sensor_msgs::msg::PointCloud2::SharedPtr pointCloudMsg)
 {
+    //RCLCPP_INFO(this->get_logger(), "Recibi nueva nube de puntos. MinRange: %d, MaxRange: %d, IntensityThreshold: %d", MinRange, MaxRange, IntensityThreshold);
+
     ExtractPointsFromNewPointCloud(pointCloudMsg);  //que regrese un vector de puntos en vez de llenar el atributo de la clase?
 
     if(IsFirstIteration)
@@ -74,8 +76,6 @@ void PointCloudProcessor::PointCloud_Callback(const sensor_msgs::msg::PointCloud
     }
     
     PublishTransform(pointCloudMsg->header.stamp, pointCloudMsg->header.frame_id);     //parametros?
-    
-    //RCLCPP_INFO(this->get_logger(), "Recibi nueva nube de puntos. MinRange: %d, MaxRange: %d, IntensityThreshold: %d", MinRange, MaxRange, IntensityThreshold);
 }
 
 void PointCloudProcessor::SetupParameters()
@@ -101,6 +101,8 @@ void PointCloudProcessor::ExtractPointsFromNewPointCloud(const sensor_msgs::msg:
     sensor_msgs::PointCloud2ConstIterator<float> iter_z(*pointCloudMsg, "z");
     sensor_msgs::PointCloud2ConstIterator<float> iter_intensity(*pointCloudMsg, "intensity");
 
+    int validPointCounter = 0;
+
     for (; iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z, ++iter_intensity)
     {
         float x = *iter_x;
@@ -114,8 +116,16 @@ void PointCloudProcessor::ExtractPointsFromNewPointCloud(const sensor_msgs::msg:
 
             if((MinRange*MinRange < rangeSquared) && (rangeSquared < MaxRange*MaxRange) && (IntensityThreshold < intensity))
             {
-                Eigen::Vector3f newPoint(x, y, z);
-                NewPointCloudReceived.push_back(newPoint);
+                if(validPointCounter == 10) //submuestreo para llenar NewPointCloudReceived
+                {
+                    Eigen::Vector3f newPoint(x, y, z);
+                    NewPointCloudReceived.push_back(newPoint);
+                    validPointCounter = 0;
+                }
+                else
+                {
+                    validPointCounter++;
+                }
             }
         }
     }
@@ -123,7 +133,7 @@ void PointCloudProcessor::ExtractPointsFromNewPointCloud(const sensor_msgs::msg:
 
 void PointCloudProcessor::IterativeClosestPoint(const std::vector<Eigen::Vector3f>& newPointCloudPoints)
 {
-    constexpr int MAX_ICP_ITERATIONS = 10;
+    constexpr int MAX_ICP_ITERATIONS = 3;
     constexpr float ROTATION_EPSILON = 1e-4;
     constexpr float TRANSLATION_EPSILON = 1e-4;
     constexpr int SUBSAMPLING_STEP = 10;
@@ -133,10 +143,12 @@ void PointCloudProcessor::IterativeClosestPoint(const std::vector<Eigen::Vector3
 
     for(int iter = 0; iter < MAX_ICP_ITERATIONS; ++iter)
     {
-        Eigen::MatrixXf H = Eigen::MatrixXf::Zero(6, 6);
-        Eigen::VectorXf b = Eigen::VectorXf::Zero(6);
+        Eigen::Matrix<float, 6, 6> H = Eigen::Matrix<float, 6, 6>::Zero();
+        Eigen::Matrix<float, 6, 1> b = Eigen::Matrix<float, 6, 1>::Zero();
 
-        //for(const auto& point : newPointCloudPoints)
+        int validCorrespondences = 0;
+        float totalSquaredError = 0.0f;
+
         for(size_t i = 0; i < newPointCloudPoints.size(); i += SUBSAMPLING_STEP)
         {
             const auto& point = newPointCloudPoints[i];
@@ -147,8 +159,11 @@ void PointCloudProcessor::IterativeClosestPoint(const std::vector<Eigen::Vector3
 
             if(nearestNeighborResult.distanceSq < (MaximumNeighborDistanceThreshold * MaximumNeighborDistanceThreshold))
             {
+                validCorrespondences++;
+
                 float error = nearestNeighborResult.normal.transpose().dot(pTransformed - nearestNeighborResult.point);
-            
+                totalSquaredError += error * error;
+
                 Eigen::Matrix<float, 1, 6> Jacobian;
 
                 Eigen::Matrix3f px = GetSkewMatrix(point);
@@ -161,17 +176,34 @@ void PointCloudProcessor::IterativeClosestPoint(const std::vector<Eigen::Vector3
             }
         }
 
-        Eigen::VectorXf dx = H.ldlt().solve(-b);
-
-        Eigen::Vector3f dr = dx.head<3>();
-        Eigen::Vector3f dt = dx.tail<3>();
-
-        R = R * ComputeExpSO3(dr);
-        t = t + dt;
-
-        if(dr.norm() < ROTATION_EPSILON && dt.norm() < TRANSLATION_EPSILON)
+        if(validCorrespondences < 100)
         {
+            RCLCPP_WARN(this->get_logger(), "Less than 100 valid correspondences. Breaking ICP iteration.");
             break;
+        }
+
+        float rootMeanSquaredError = std::sqrt(totalSquaredError / validCorrespondences);
+        RCLCPP_INFO(this->get_logger(), "ICP Iteration %d: Valid Correspondences: %d, RMSE: %f", iter + 1, validCorrespondences, rootMeanSquaredError);
+
+        Eigen::Matrix<float, 6, 1> dx = H.ldlt().solve(-b);
+
+        if(!dx.allFinite())
+        {
+            RCLCPP_WARN(this->get_logger(), "Non-finite values in ICP solution, stopping iteration.");
+            break;
+        }
+        else
+        {
+            Eigen::Vector3f dr = dx.head<3>();
+            Eigen::Vector3f dt = dx.tail<3>();
+
+            R = R * ComputeExpSO3(dr);
+            t = t + dt;
+
+            if(dr.norm() < ROTATION_EPSILON && dt.norm() < TRANSLATION_EPSILON)
+            {
+                break;
+            }
         }
     }
 
