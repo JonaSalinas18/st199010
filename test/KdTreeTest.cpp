@@ -70,7 +70,7 @@ TEST(KdTreeTest, GivenSampleKdTree_WhenQueryingEachPoint_ThenNearestNeighborIsTh
         EXPECT_FLOAT_EQ(resultNeighbor.point.x(), point.x());
         EXPECT_FLOAT_EQ(resultNeighbor.point.y(), point.y());
         EXPECT_FLOAT_EQ(resultNeighbor.point.z(), point.z());
-        EXPECT_FLOAT_EQ(resultNeighbor.distance, DISTANCE_ZERO);
+        EXPECT_FLOAT_EQ(resultNeighbor.distanceSq, DISTANCE_ZERO);
     }
 }
 
@@ -101,7 +101,7 @@ TEST(KdTreeTest, GivenKdTreeNearestNeighborQuery_ThenResultIsTheSameAsBruteForce
     EXPECT_FLOAT_EQ(resultNeighbor.point.x(), bruteForceNearestNeighbor.x());
     EXPECT_FLOAT_EQ(resultNeighbor.point.y(), bruteForceNearestNeighbor.y());
     EXPECT_FLOAT_EQ(resultNeighbor.point.z(), bruteForceNearestNeighbor.z());
-    EXPECT_FLOAT_EQ(resultNeighbor.distance, shortestDistance);
+    EXPECT_FLOAT_EQ(resultNeighbor.distanceSq, shortestDistance);
 }
 
 TEST(KdTreeTest, GivenSampleKdTreeWithTwoGroups_WhenQueryingNearestNeighbor_ThenNormalsMatchesExpected)

@@ -94,7 +94,7 @@ KdTree::NearestNeighborResult KdTree::GetNearestNeighbor(const Eigen::Vector3f& 
 {
     NearestNeighborResult bestNeighbor;
     bestNeighbor.found = false;
-    bestNeighbor.distance = std::numeric_limits<float>::max();
+    bestNeighbor.distanceSq = std::numeric_limits<float>::max();
 
     GetNearestNeighborRecursive(Root, queryPoint, bestNeighbor);
 
@@ -108,11 +108,11 @@ void KdTree::GetNearestNeighborRecursive(const std::unique_ptr<Node>& node, cons
         for (const auto& point : node->points)
         {
             float euclideanDistanceSq = (queryPoint - point).squaredNorm();      //replace for SquaredDistance?
-            if (euclideanDistanceSq < bestResult.distance)
+            if (euclideanDistanceSq < bestResult.distanceSq)
             {
                 bestResult.point = point;
                 bestResult.normal = node->normalVector;
-                bestResult.distance = euclideanDistanceSq;
+                bestResult.distanceSq = euclideanDistanceSq;
                 bestResult.found = true;        //es util?
             }
         }
@@ -125,7 +125,7 @@ void KdTree::GetNearestNeighborRecursive(const std::unique_ptr<Node>& node, cons
 
         GetNearestNeighborRecursive(firstSearch, queryPoint, bestResult);
 
-        if (std::abs(splitDistance) < bestResult.distance)      //revisar
+        if (std::abs(splitDistance) < bestResult.distanceSq)      //revisar
         {
             GetNearestNeighborRecursive(secondSearch, queryPoint, bestResult);
         }

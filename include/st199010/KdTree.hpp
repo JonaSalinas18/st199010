@@ -12,7 +12,7 @@ class KdTree
         {
             Eigen::Vector3f point;
             Eigen::Vector3f normal;
-            float distance;
+            float distanceSq;
             bool found;
         };
         

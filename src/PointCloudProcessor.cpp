@@ -16,7 +16,7 @@ namespace
 PointCloudProcessor:: PointCloudProcessor()
 : Node("point_cloud_processor_node")
 , KeyFrameCounter(RESET_KEYFRAME_COUNTER)
-, KeyFrameStepsUpdateThreshold(3)
+, KeyFrameStepsUpdateThreshold(10)
 , MinRange(MIN_RANGE_DEFAULT)
 , MaxRange(MAX_RANGE_DEFAULT)
 , IntensityThreshold(INTENSITY_THRESHOLD_DEFAULT)
@@ -47,17 +47,17 @@ void PointCloudProcessor::PointCloud_Callback(const sensor_msgs::msg::PointCloud
 
         IsFirstIteration = false;
 
-        RCLCPP_INFO(this->get_logger(), "Que onda bandamax");
+        //RCLCPP_INFO(this->get_logger(), "Que onda bandamax");
     }
     else
     {
         KeyFrameCounter++;
 
         RCLCPP_INFO(this->get_logger(), "Voy a meterme a ICP, puntos en newPointCloud: %zu", NewPointCloudReceived.size());
-        
+
         IterativeClosestPoint(NewPointCloudReceived);   //quitar el parametro?
 
-        RCLCPP_INFO(this->get_logger(), "Termine ICP");
+        //RCLCPP_INFO(this->get_logger(), "Termine ICP");
 
         T_odometry_current = T_odometry_keyframe * T_keyframe_current;
 
@@ -71,13 +71,11 @@ void PointCloudProcessor::PointCloud_Callback(const sensor_msgs::msg::PointCloud
 
             KeyFrameCounter = RESET_KEYFRAME_COUNTER;
         }
-
-        RCLCPP_INFO(this->get_logger(), "Voy a publicar transform");
-        PublishTransform(pointCloudMsg->header.stamp, pointCloudMsg->header.frame_id);     //parametros?
     }
     
+    PublishTransform(pointCloudMsg->header.stamp, pointCloudMsg->header.frame_id);     //parametros?
     
-    //CLCPP_INFO(this->get_logger(), "Recibi nueva nube de puntos. MinRange: %d, MaxRange: %d, IntensityThreshold: %d", MinRange, MaxRange, IntensityThreshold);
+    //RCLCPP_INFO(this->get_logger(), "Recibi nueva nube de puntos. MinRange: %d, MaxRange: %d, IntensityThreshold: %d", MinRange, MaxRange, IntensityThreshold);
 }
 
 void PointCloudProcessor::SetupParameters()
@@ -147,13 +145,13 @@ void PointCloudProcessor::IterativeClosestPoint(const std::vector<Eigen::Vector3
 
             KdTree::NearestNeighborResult nearestNeighborResult = KdTreeInstance.GetNearestNeighbor(pTransformed);
 
-            if(nearestNeighborResult.distance < MaximumNeighborDistanceThreshold)
+            if(nearestNeighborResult.distanceSq < (MaximumNeighborDistanceThreshold * MaximumNeighborDistanceThreshold))
             {
                 float error = nearestNeighborResult.normal.transpose().dot(pTransformed - nearestNeighborResult.point);
             
                 Eigen::Matrix<float, 1, 6> Jacobian;
 
-                Eigen::Matrix3f px = GetSkewMatrix(pTransformed);
+                Eigen::Matrix3f px = GetSkewMatrix(point);
                 Eigen::Matrix<float, 1, 3> JacobianRotation = -nearestNeighborResult.normal.transpose() * R * px;
                 Eigen::Matrix<float, 1, 3> JacobianTranslation = nearestNeighborResult.normal.transpose();
                 Jacobian << JacobianRotation, JacobianTranslation;
@@ -241,3 +239,11 @@ void PointCloudProcessor::PublishTransform(const rclcpp::Time& timestamp, const 
 
     TfBroadcaster->sendTransform(transformMsg);
 }
+
+
+/*
+    Cosas que checar:
+        -Comparar contra el ground truth 
+        -Hacer el test de nube vs nube iguales = identidad
+
+*/
