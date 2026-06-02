@@ -10,12 +10,12 @@ namespace
     constexpr int MAX_RANGE_DEFAULT = 100;
     constexpr int INTENSITY_THRESHOLD_DEFAULT = 9000;
     constexpr int MAXIMUM_NEIGHBOR_DISTANCE_THRESHOLD_DEFAULT = 2;
-    constexpr int RESET_KEYFRAME_COUNTER = 0;
+    constexpr int RESET_COUNTER = 0;
 }
 
 PointCloudProcessor:: PointCloudProcessor()
 : Node("point_cloud_processor_node")
-, KeyFrameCounter(RESET_KEYFRAME_COUNTER)
+, KeyFrameCounter(RESET_COUNTER)
 , KeyFrameStepsUpdateThreshold(10)
 , MinRange(MIN_RANGE_DEFAULT)
 , MaxRange(MAX_RANGE_DEFAULT)
@@ -48,8 +48,6 @@ void PointCloudProcessor::PointCloud_Callback(const sensor_msgs::msg::PointCloud
         T_odometry_keyframe = Eigen::Isometry3f::Identity();
 
         IsFirstIteration = false;
-
-        //RCLCPP_INFO(this->get_logger(), "Que onda bandamax");
     }
     else
     {
@@ -63,7 +61,8 @@ void PointCloudProcessor::PointCloud_Callback(const sensor_msgs::msg::PointCloud
 
         T_odometry_current = T_odometry_keyframe * T_keyframe_current;
 
-        if(KeyFrameCounter == KeyFrameStepsUpdateThreshold)
+        //if(KeyFrameCounter == KeyFrameStepsUpdateThreshold)         //cambiar criterio de update de Keyframe?
+        if(T_keyframe_current.translation().norm() > 0.4f)
         {
             KeyFramePointCloud = NewPointCloudReceived;
             KdTreeInstance.BuildTree(KeyFramePointCloud);
@@ -71,7 +70,7 @@ void PointCloudProcessor::PointCloud_Callback(const sensor_msgs::msg::PointCloud
             T_odometry_keyframe = T_odometry_current;
             T_keyframe_current = Eigen::Isometry3f::Identity();
 
-            KeyFrameCounter = RESET_KEYFRAME_COUNTER;
+            KeyFrameCounter = RESET_COUNTER;
         }
     }
     
@@ -93,15 +92,16 @@ void PointCloudProcessor::SetupParameters()
 
 void PointCloudProcessor::ExtractPointsFromNewPointCloud(const sensor_msgs::msg::PointCloud2::SharedPtr pointCloudMsg)
 {
+    constexpr int SUSBSAMPLING_FACTOR_NEW_CLOUD_LIST = 10;
+
     NewPointCloudReceived.clear();
-    //NewPointCloudReceived.reserve(pointCloudMsg->width * pointCloudMsg->height);
 
     sensor_msgs::PointCloud2ConstIterator<float> iter_x(*pointCloudMsg, "x");
     sensor_msgs::PointCloud2ConstIterator<float> iter_y(*pointCloudMsg, "y");
     sensor_msgs::PointCloud2ConstIterator<float> iter_z(*pointCloudMsg, "z");
     sensor_msgs::PointCloud2ConstIterator<float> iter_intensity(*pointCloudMsg, "intensity");
 
-    int validPointCounter = 0;
+    int subsamplePointCounter = RESET_COUNTER;
 
     for (; iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z, ++iter_intensity)
     {
@@ -116,15 +116,15 @@ void PointCloudProcessor::ExtractPointsFromNewPointCloud(const sensor_msgs::msg:
 
             if((MinRange*MinRange < rangeSquared) && (rangeSquared < MaxRange*MaxRange) && (IntensityThreshold < intensity))
             {
-                if(validPointCounter == 10) //submuestreo para llenar NewPointCloudReceived
+                if(subsamplePointCounter == SUSBSAMPLING_FACTOR_NEW_CLOUD_LIST)
                 {
                     Eigen::Vector3f newPoint(x, y, z);
                     NewPointCloudReceived.push_back(newPoint);
-                    validPointCounter = 0;
+                    subsamplePointCounter = RESET_COUNTER;
                 }
                 else
                 {
-                    validPointCounter++;
+                    subsamplePointCounter++;
                 }
             }
         }
@@ -136,10 +136,12 @@ void PointCloudProcessor::IterativeClosestPoint(const std::vector<Eigen::Vector3
     constexpr int MAX_ICP_ITERATIONS = 3;
     constexpr float ROTATION_EPSILON = 1e-4;
     constexpr float TRANSLATION_EPSILON = 1e-4;
-    constexpr int SUBSAMPLING_STEP = 10;
+    constexpr int SUBSAMPLING_STEP = 1;
 
     Eigen::Matrix3f R = T_keyframe_current.linear();
     Eigen::Vector3f t = T_keyframe_current.translation();
+
+    float previousRootMeanSquareError = std::numeric_limits<float>::max();
 
     for(int iter = 0; iter < MAX_ICP_ITERATIONS; ++iter)
     {
@@ -185,6 +187,14 @@ void PointCloudProcessor::IterativeClosestPoint(const std::vector<Eigen::Vector3
         float rootMeanSquaredError = std::sqrt(totalSquaredError / validCorrespondences);
         RCLCPP_INFO(this->get_logger(), "ICP Iteration %d: Valid Correspondences: %d, RMSE: %f", iter + 1, validCorrespondences, rootMeanSquaredError);
 
+        if(rootMeanSquaredError > previousRootMeanSquareError)
+        {
+            RCLCPP_WARN(this->get_logger(), "RMSE increased. Breaking ICP iteration.");
+            break;
+        }
+
+        previousRootMeanSquareError = rootMeanSquaredError;
+
         Eigen::Matrix<float, 6, 1> dx = H.ldlt().solve(-b);
 
         if(!dx.allFinite())
@@ -196,6 +206,15 @@ void PointCloudProcessor::IterativeClosestPoint(const std::vector<Eigen::Vector3
         {
             Eigen::Vector3f dr = dx.head<3>();
             Eigen::Vector3f dt = dx.tail<3>();
+
+            RCLCPP_INFO(this->get_logger(), "dr_norm: %0.6f, dt_norm: %0.6f", dr.norm(), dt.norm());
+
+            if(dr.norm() > 0.08f || dt.norm() > 0.15f)
+            {
+                RCLCPP_WARN(this->get_logger(), "Large transformation update detected. Breaking ICP iteration.");
+                break;
+            }
+
 
             R = R * ComputeExpSO3(dr);
             t = t + dt;
@@ -249,7 +268,7 @@ Eigen::Matrix3f PointCloudProcessor::ComputeExpSO3(const Eigen::Vector3f& rotati
 
 void PointCloudProcessor::PublishTransform(const rclcpp::Time& timestamp, const std::string& frame_id)   //parametros?
 {
-    RCLCPP_INFO(this->get_logger(), "Voy a publicar translation x: %0.1f, y: %0.1f, z: %0.1f", T_odometry_current.translation().x(), T_odometry_current.translation().y(), T_odometry_current.translation().z());
+    RCLCPP_INFO(this->get_logger(), "Voy a publicar translation x: %0.4f, y: %0.4f, z: %0.4f", T_odometry_current.translation().x(), T_odometry_current.translation().y(), T_odometry_current.translation().z());
 
     Eigen::Quaternionf quaternion(T_odometry_current.linear());
     quaternion.normalize();
