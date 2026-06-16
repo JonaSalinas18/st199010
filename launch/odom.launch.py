@@ -17,18 +17,11 @@ def generate_launch_description():
     )
 
     useRvizArg = LaunchConfiguration('useRviz')
-    logLevel = LaunchConfiguration('logLevel')
 
     declareLaunchArg = DeclareLaunchArgument(
         'useRviz',
         default_value='false',
         description='Launch RViz or not'
-    )
-
-    logLevelArg = DeclareLaunchArgument(
-        'logLevel',
-        default_value='info',
-        description='Logging level'
     )
 
     pointCloudProcessor = Node(
@@ -46,7 +39,6 @@ def generate_launch_description():
     )
 
     launchDescription.add_action(declareLaunchArg)
-    launchDescription.add_action(logLevelArg)
     launchDescription.add_action(pointCloudProcessor)
     launchDescription.add_action(rVizNode)
 

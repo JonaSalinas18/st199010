@@ -59,7 +59,7 @@ void PointCloudProcessor::PointCloud_Callback(const sensor_msgs::msg::PointCloud
     }
     else
     {
-        RCLCPP_DEBUG(this->get_logger(), "Starting ICP, points in newPointCloud: %zu", NewPointCloudReceived.size());
+        RCLCPP_INFO(this->get_logger(), "Starting ICP, points in newPointCloud: %zu", NewPointCloudReceived.size());
 
         IterativeClosestPoint(NewPointCloudReceived);
 
@@ -207,7 +207,7 @@ void PointCloudProcessor::IterativeClosestPoint(const std::vector<Eigen::Vector3
         }
 
         float rootMeanSquaredError = std::sqrt(totalSquaredError / validCorrespondences);
-        RCLCPP_DEBUG(this->get_logger(), "ICP Iteration %d: Valid Correspondences: %d, RMSE: %f", iter + 1, validCorrespondences, rootMeanSquaredError);
+        RCLCPP_INFO(this->get_logger(), "ICP Iteration %d: Valid Correspondences: %d, RMSE: %f", iter + 1, validCorrespondences, rootMeanSquaredError);
 
         if(rootMeanSquaredError > previousRootMeanSquareError)
         {
@@ -229,7 +229,7 @@ void PointCloudProcessor::IterativeClosestPoint(const std::vector<Eigen::Vector3
             Eigen::Vector3f dr = dx.head<3>();
             Eigen::Vector3f dt = dx.tail<3>();
 
-            RCLCPP_DEBUG(this->get_logger(), "dr_norm: %0.6f, dt_norm: %0.6f", dr.norm(), dt.norm());
+            RCLCPP_INFO(this->get_logger(), "dr_norm: %0.6f, dt_norm: %0.6f", dr.norm(), dt.norm());
 
             R = R * ComputeExpSO3(dr);
             t = t + dt;
@@ -283,7 +283,7 @@ Eigen::Matrix3f PointCloudProcessor::ComputeExpSO3(const Eigen::Vector3f& rotati
 
 void PointCloudProcessor::PublishTransform(const rclcpp::Time& timestamp, const std::string& frame_id)
 {
-    RCLCPP_DEBUG(this->get_logger(), "Publishing translation x: %0.4f, y: %0.4f, z: %0.4f", T_odometry_current.translation().x(), T_odometry_current.translation().y(), T_odometry_current.translation().z());
+    RCLCPP_INFO(this->get_logger(), "Publishing translation x: %0.4f, y: %0.4f, z: %0.4f", T_odometry_current.translation().x(), T_odometry_current.translation().y(), T_odometry_current.translation().z());
 
     Eigen::Quaternionf quaternion(T_odometry_current.linear());
     quaternion.normalize();

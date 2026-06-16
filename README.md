@@ -25,7 +25,7 @@ colcon test --packages-select st199010 --executor sequential
 To run the project, a launch file was implemented. It can be executed with the following command:
 
 ```bash
-ros2 launch st199010 odom.launch.py useRviz:=true logLevel:=debug
+ros2 launch st199010 odom.launch.py useRviz:=true
 ```
 
 ## Run the rosbag
@@ -40,6 +40,7 @@ To evaluate how good is the odometry, evo tool was used to generate graphs of th
 These graphs were obtained using a command like this one:
 
 ```bash
+source ~/evo_env/bin/activate
 evo_traj tum optimized_traj.txt estimate.txt --plot --plot_mode xy
 ```
 
