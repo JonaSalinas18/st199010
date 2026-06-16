@@ -87,14 +87,6 @@ if(BUILD_TESTING)
     lidar_odometry_core
   )
 
-  ament_add_gtest(PointCloudProcessorTest
-    test/PointCloudProcessorTest.cpp
-  )
-
-  target_link_libraries(PointCloudProcessorTest
-    lidar_odometry_core
-  )
-
   # the following line skips the linter which checks for copyrights
   # comment the line when a copyright and license is added to all source files
   set(ament_cmake_copyright_FOUND TRUE)

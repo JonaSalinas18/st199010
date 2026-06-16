@@ -27,8 +27,6 @@ class PointCloudProcessor : public rclcpp::Node
         Eigen::Matrix3f GetSkewMatrix(const Eigen::Vector3f& point);
         Eigen::Matrix3f ComputeExpSO3(const Eigen::Vector3f& rotationVector);
 
-        int KeyFrameCounter;
-        int KeyFrameStepsUpdateThreshold;       //poner como parametro extra?
         int MinRange;
         int MaxRange;
         int IntensityThreshold;

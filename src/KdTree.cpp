@@ -113,21 +113,15 @@ void KdTree::GetNearestNeighborRecursive(const std::unique_ptr<Node>& node, cons
                 bestResult.point = point;
                 bestResult.normal = node->normalVector;
                 bestResult.distanceSq = euclideanDistanceSq;
-                bestResult.found = true;        //es util?
+                bestResult.found = true;
             }
         }
     }
     else
     {
         float splitDistance = node->splitDirection.dot(queryPoint - node->mean);
-        const std::unique_ptr<Node>& firstSearch = splitDistance > ZERO_DISTANCE ? node->right : node->left;
-        //const std::unique_ptr<Node>& secondSearch = splitDistance > ZERO_DISTANCE ? node->left : node->right;
+        const std::unique_ptr<Node>& searchSidePtr = splitDistance > ZERO_DISTANCE ? node->right : node->left;
 
-        GetNearestNeighborRecursive(firstSearch, queryPoint, bestResult);
-
-        //if ((splitDistance * splitDistance) < bestResult.distanceSq)
-        //{
-        //    GetNearestNeighborRecursive(secondSearch, queryPoint, bestResult);
-        //}
+        GetNearestNeighborRecursive(searchSidePtr, queryPoint, bestResult);
     }
 }

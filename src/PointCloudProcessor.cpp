@@ -11,12 +11,11 @@ namespace
     constexpr int INTENSITY_THRESHOLD_DEFAULT = 9000;
     constexpr int MAXIMUM_NEIGHBOR_DISTANCE_THRESHOLD_DEFAULT = 2;
     constexpr int RESET_COUNTER = 0;
+    constexpr int TRANSLATION_THRESHOLD_FOR_KEYFRAME_UPDATE_METERS = 0.4f;
 }
 
 PointCloudProcessor:: PointCloudProcessor()
 : Node("point_cloud_processor_node")
-, KeyFrameCounter(RESET_COUNTER)
-, KeyFrameStepsUpdateThreshold(10)
 , MinRange(MIN_RANGE_DEFAULT)
 , MaxRange(MAX_RANGE_DEFAULT)
 , IntensityThreshold(INTENSITY_THRESHOLD_DEFAULT)
@@ -48,44 +47,35 @@ PointCloudProcessor::~PointCloudProcessor()
 
 void PointCloudProcessor::PointCloud_Callback(const sensor_msgs::msg::PointCloud2::SharedPtr pointCloudMsg)
 {
-    //RCLCPP_INFO(this->get_logger(), "Recibi nueva nube de puntos. MinRange: %d, MaxRange: %d, IntensityThreshold: %d", MinRange, MaxRange, IntensityThreshold);
-
-    ExtractPointsFromNewPointCloud(pointCloudMsg);  //que regrese un vector de puntos en vez de llenar el atributo de la clase?
+    ExtractPointsFromNewPointCloud(pointCloudMsg);
 
     if(IsFirstIteration)
     {
         KeyFramePointCloud = NewPointCloudReceived;
-        KdTreeInstance.BuildTree(KeyFramePointCloud);       //seria posible incluso quitar KeyframePointCloud y construir el kdTree directamente con NewPointCloudReceived?
+        KdTreeInstance.BuildTree(KeyFramePointCloud);
         T_odometry_keyframe = Eigen::Isometry3f::Identity();
 
         IsFirstIteration = false;
     }
     else
     {
-        KeyFrameCounter++;
+        RCLCPP_DEBUG(this->get_logger(), "Starting ICP, points in newPointCloud: %zu", NewPointCloudReceived.size());
 
-        RCLCPP_INFO(this->get_logger(), "Voy a meterme a ICP, puntos en newPointCloud: %zu", NewPointCloudReceived.size());
-
-        IterativeClosestPoint(NewPointCloudReceived);   //quitar el parametro?
-
-        //RCLCPP_INFO(this->get_logger(), "Termine ICP");
+        IterativeClosestPoint(NewPointCloudReceived);
 
         T_odometry_current = T_odometry_keyframe * T_keyframe_current;
 
-        //if(KeyFrameCounter == KeyFrameStepsUpdateThreshold)         //cambiar criterio de update de Keyframe?
-        if(T_keyframe_current.translation().norm() > 0.4f)
+        if(T_keyframe_current.translation().norm() > TRANSLATION_THRESHOLD_FOR_KEYFRAME_UPDATE_METERS)
         {
             KeyFramePointCloud = NewPointCloudReceived;
             KdTreeInstance.BuildTree(KeyFramePointCloud);
 
             T_odometry_keyframe = T_odometry_current;
             T_keyframe_current = Eigen::Isometry3f::Identity();
-
-            KeyFrameCounter = RESET_COUNTER;
         }
     }
     
-    PublishTransform(pointCloudMsg->header.stamp, pointCloudMsg->header.frame_id);     //parametros?
+    PublishTransform(pointCloudMsg->header.stamp, pointCloudMsg->header.frame_id);
     WriteOdometryToFile(pointCloudMsg->header.stamp);
 }
 
@@ -217,7 +207,7 @@ void PointCloudProcessor::IterativeClosestPoint(const std::vector<Eigen::Vector3
         }
 
         float rootMeanSquaredError = std::sqrt(totalSquaredError / validCorrespondences);
-        RCLCPP_INFO(this->get_logger(), "ICP Iteration %d: Valid Correspondences: %d, RMSE: %f", iter + 1, validCorrespondences, rootMeanSquaredError);
+        RCLCPP_DEBUG(this->get_logger(), "ICP Iteration %d: Valid Correspondences: %d, RMSE: %f", iter + 1, validCorrespondences, rootMeanSquaredError);
 
         if(rootMeanSquaredError > previousRootMeanSquareError)
         {
@@ -239,14 +229,7 @@ void PointCloudProcessor::IterativeClosestPoint(const std::vector<Eigen::Vector3
             Eigen::Vector3f dr = dx.head<3>();
             Eigen::Vector3f dt = dx.tail<3>();
 
-            RCLCPP_INFO(this->get_logger(), "dr_norm: %0.6f, dt_norm: %0.6f", dr.norm(), dt.norm());
-
-            //if(dr.norm() > 0.08f || dt.norm() > 0.15f)
-            //{
-            //    RCLCPP_WARN(this->get_logger(), "Large transformation update detected. Breaking ICP iteration.");
-            //    break;
-            //}
-
+            RCLCPP_DEBUG(this->get_logger(), "dr_norm: %0.6f, dt_norm: %0.6f", dr.norm(), dt.norm());
 
             R = R * ComputeExpSO3(dr);
             t = t + dt;
@@ -298,9 +281,9 @@ Eigen::Matrix3f PointCloudProcessor::ComputeExpSO3(const Eigen::Vector3f& rotati
     return validRotationMatrix;
 }
 
-void PointCloudProcessor::PublishTransform(const rclcpp::Time& timestamp, const std::string& frame_id)   //parametros?
+void PointCloudProcessor::PublishTransform(const rclcpp::Time& timestamp, const std::string& frame_id)
 {
-    RCLCPP_INFO(this->get_logger(), "Voy a publicar translation x: %0.4f, y: %0.4f, z: %0.4f", T_odometry_current.translation().x(), T_odometry_current.translation().y(), T_odometry_current.translation().z());
+    RCLCPP_DEBUG(this->get_logger(), "Publishing translation x: %0.4f, y: %0.4f, z: %0.4f", T_odometry_current.translation().x(), T_odometry_current.translation().y(), T_odometry_current.translation().z());
 
     Eigen::Quaternionf quaternion(T_odometry_current.linear());
     quaternion.normalize();
@@ -340,10 +323,3 @@ void PointCloudProcessor::WriteOdometryToFile(const rclcpp::Time& timestamp)
                        << quaternion.w() << "\n";
     }
 }
-
-/*
-    Cosas que checar:
-        -Comparar contra el ground truth 
-        -Hacer el test de nube vs nube iguales = identidad
-
-*/
