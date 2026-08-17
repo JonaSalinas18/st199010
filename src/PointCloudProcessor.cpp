@@ -1,3 +1,11 @@
+/***************************************************
+PointCloudProcessor.cpp
+
+File that implements the PointCloudProcessor class, which processes incoming point cloud data from a LiDAR sensor.
+It performs filtering, subsampling, and applies Iterative Closest Point (ICP) algorithm to estimate the transformation between consecutive point clouds.
+The estimated odometry is published as a transform and optionally written to a file.
+***************************************************/
+
 #include "st199010/PointCloudProcessor.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "tf2/LinearMath/Quaternion.h"
@@ -11,7 +19,7 @@ namespace
     constexpr int INTENSITY_THRESHOLD_DEFAULT = 9000;
     constexpr int MAXIMUM_NEIGHBOR_DISTANCE_THRESHOLD_DEFAULT = 2;
     constexpr int RESET_COUNTER = 0;
-    constexpr int TRANSLATION_THRESHOLD_FOR_KEYFRAME_UPDATE_METERS = 0.4f;
+    constexpr float TRANSLATION_THRESHOLD_FOR_KEYFRAME_UPDATE_METERS = 0.4f;
 }
 
 PointCloudProcessor:: PointCloudProcessor()

@@ -1,3 +1,11 @@
+/***************************************************
+KdTree.cpp
+
+File that implements the KdTree class. This class is used to build a Kd-Tree data structure from a set of 3D points, and has a method
+to perform nearest neighbor search for a given query point. The Kd-Tree is built recursively by splitting the points based on the principal 
+eigenvector of the covariance matrix of the points at each node (Maximum spread based split).
+***************************************************/
+
 #include "st199010/KdTree.hpp"
 #include <Eigen/Dense>
 

@@ -2,6 +2,8 @@
 
 ROS2 package with a custom implementation of a 3D LiDAR Odometry using point-to-plane Iterative Closest Point and a KD-Tree nearest neighbor search with Maximum spread-based split.
 
+One of the projects for the Advanced Mobile Robotics course.
+
 ## Requirements
 
 - Ubuntu 22.04

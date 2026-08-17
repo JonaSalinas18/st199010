@@ -1,3 +1,9 @@
+/************************************************
+KdTreeTest.cpp
+
+File with Unit Tests to verify the correct implementation of the KdTree class.
+************************************************/
+
 #include <gtest/gtest.h>
 #include "st199010/KdTree.hpp"
 
@@ -152,11 +158,3 @@ TEST(KdTreeTest, GivenSampleKdTreeWithTwoGroups_WhenQueryingNearestNeighbor_Then
     EXPECT_FLOAT_EQ(resultNeighbor.normal.z(), referenceResultB.normal.z());
 }
 
-
-/*
-Otros tests:
-    - Test de normales
-
-    - Teniendo ciertos puntos, buscar el nearest neighbor y testear la normal
-
-*/
